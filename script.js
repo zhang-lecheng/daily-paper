@@ -9,7 +9,8 @@ const elements = {
     aiFilter: document.getElementById('aiFilter'),
     paperList: document.getElementById('paperList'),
     searchInput: document.getElementById('searchInput'),
-    categoryBar: document.getElementById('categoryBar')
+    categoryBar: document.getElementById('categoryBar'),
+    perturbationFilter: document.getElementById('perturbationFilter')
 };
 
 let allPapers = [];
@@ -85,14 +86,16 @@ window.setCategory = (cat) => {
 
 function renderPapers() {
     const showOnlyAI = elements.aiFilter.checked;
+    const showOnlyPerturb = elements.perturbationFilter.checked;
     const query = elements.searchInput.value.toLowerCase();
 
     const filtered = allPapers.filter(p => {
         const matchesAI = !showOnlyAI || p.is_ai4science;
+        const matchesPerturb = !showOnlyPerturb || p.is_perturbation;
         const matchesCat = currentCategory === 'All' || p.primary_category === currentCategory;
         const matchesSearch = p.title.toLowerCase().includes(query) ||
             p.summary.toLowerCase().includes(query);
-        return matchesAI && matchesCat && matchesSearch;
+        return matchesAI && matchesPerturb && matchesCat && matchesSearch;
     });
 
     if (filtered.length === 0) {
@@ -128,6 +131,7 @@ function renderPapers() {
 }
 
 elements.aiFilter.addEventListener('change', renderPapers);
+elements.perturbationFilter.addEventListener('change', renderPapers);
 elements.searchInput.addEventListener('input', renderPapers);
 
 init();
