@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily AI4Science Papers</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="glass-bg"></div>
+    
+    <header>
+        <div class="header-container">
+            <div class="logo">
+                <h1>AI4Science<span>Tracker</span></h1>
+            </div>
+            <div class="controls">
+                <div class="date-selector">
+                    <select id="dateSelect">
+                        <option value="">Loading dates...</option>
+                    </select>
+                </div>
+                <div class="filter-toggle">
+                    <label class="switch">
+                        <input type="checkbox" id="aiFilter">
+                        <span class="slider round"></span>
+                    </label>
+                    <span>AI4Science Only</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main id="paperList">
+        <div class="loading">Fetching the latest research...</div>
+    </main>
+
+    <footer>
+        <p>Data updated daily from arXiv • Powered by DeepSeek AI</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

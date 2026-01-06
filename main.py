@@ -11,9 +11,13 @@ load_dotenv()
 # Configuration
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "sk-1936b4530c074806b9398e016aa5f1ec")
 DEEPSEEK_BASE_URL = "https://api.deepseek.com"
-CATEGORIES = ["cs.AI", "cs.LG", "stat.ML", "q-bio.QM", "physics.comp-ph", "math.OC"]
-MAX_RESULTS = 50
+CATEGORIES = ["cs.AI", "cs.LG", "stat.ML", "q-bio.QM", "physics.comp-ph", "math.OC", "cs.CE", "cs.MS", "cs.NE"]
+MAX_RESULTS = 100
 HISTORY_FILE = "papers_history.json"
+DATA_DIR = "data"
+DATES_FILE = os.path.join(DATA_DIR, "available_dates.json")
+
+os.makedirs(DATA_DIR, exist_ok=True)
 
 client = OpenAI(api_key=DEEPSEEK_API_KEY, base_url=DEEPSEEK_BASE_URL)
 
@@ -64,9 +68,9 @@ def fetch_arxiv_papers():
 
 def filter_papers(papers):
     print(f"Filtering {len(papers)} papers using DeepSeek...")
-    relevant_papers = []
+    processed_papers = []
     
-    # Load history to avoid duplicates
+    # Load history to avoid re-processing the same papers if they reappear
     if os.path.exists(HISTORY_FILE):
         with open(HISTORY_FILE, "r") as f:
             history = json.load(f)
@@ -74,22 +78,25 @@ def filter_papers(papers):
         history = []
 
     for paper in papers:
+        # Check if already processed (history is just IDs)
         if paper["id"] in history:
+            # We skip AI processing but we still want to show it in today's list if it's new today
+            # Actually, the user wants "daily" crawl. If a paper was crawled yesterday, it's stale.
             continue
             
         prompt = f"""
-        Analyze the following academic paper abstract and determine its relevance to two specific fields:
-        1. AI4Science (using AI for scientific discovery, simulation, or data analysis in biology, chemistry, physics, etc.)
-        2. Perturbation Prediction (specifically predicting cell responses to chemical or genetic perturbations).
+        Analyze the following academic paper abstract and evaluate its relevance:
+        1. Is it AI4Science (using AI/ML for scientific discovery, simulation, or data analysis in biology, chemistry, physics, materials, climate, etc.)?
+        2. If (and only if) it is AI4Science, is it specifically about Perturbation Prediction (predicting cellular, genetic, or chemical responses to perturbations like drug treatments, gene knockouts, etc.)?
 
         Paper Title: {paper["title"]}
         Abstract: {paper["summary"]}
 
         Respond in JSON format:
         {{
-            "is_ai4science": boolean,
-            "is_perturbation_prediction": boolean,
-            "reason": "short explanation in Chinese"
+            "ai4science": boolean,
+            "perturbation": boolean,
+            "reason": "Short explanation in Chinese why it is or isn't AI4Science/Perturbation"
         }}
         """
         
@@ -97,7 +104,7 @@ def filter_papers(papers):
             response = client.chat.completions.create(
                 model="deepseek-chat",
                 messages=[
-                    {"role": "system", "content": "You are a helpful assistant that classifies academic papers."},
+                    {"role": "system", "content": "You are a specialized scientific paper classifier. Be concise and precise."},
                     {"role": "user", "content": prompt}
                 ],
                 response_format={'type': 'json_object'}
@@ -105,13 +112,11 @@ def filter_papers(papers):
             
             result = json.loads(response.choices[0].message.content)
             
-            if result.get("is_ai4science") or result.get("is_perturbation_prediction"):
-                paper["ai4science"] = result.get("is_ai4science")
-                paper["perturbation"] = result.get("is_perturbation_prediction")
-                paper["reason"] = result.get("reason")
-                relevant_papers.append(paper)
+            paper["ai4science"] = result.get("ai4science", False)
+            paper["perturbation"] = result.get("perturbation", False)
+            paper["reason"] = result.get("reason", "")
             
-            # Add to history regardless of relevance to avoid re-processing
+            processed_papers.append(paper)
             history.append(paper["id"])
             
         except Exception as e:
@@ -119,38 +124,38 @@ def filter_papers(papers):
 
     # Save history
     with open(HISTORY_FILE, "w") as f:
-        json.dump(history[-500:], f) # Keep last 500
+        json.dump(history[-1000:], f) 
         
-    return relevant_papers
+    return processed_papers
 
-def update_readme(relevant_papers):
-    print(f"Updating README with {len(relevant_papers)} papers...")
+def save_daily_data(papers):
     today = datetime.date.today().strftime("%Y-%m-%d")
+    daily_file = os.path.join(DATA_DIR, f"{today}.json")
     
-    content = f"\n\n## {today}\n\n"
-    if not relevant_papers:
-        content += "No relevant papers found today.\n"
+    # Save today's papers
+    with open(daily_file, "w", encoding="utf-8") as f:
+        json.dump(papers, f, ensure_ascii=False, indent=2)
+    
+    # Update available dates
+    if os.path.exists(DATES_FILE):
+        with open(DATES_FILE, "r") as f:
+            dates = json.load(f)
     else:
-        for paper in relevant_papers:
-            tags = []
-            if paper.get("ai4science"): tags.append("AI4Science")
-            if paper.get("perturbation"): tags.append("Perturbation Prediction")
-            
-            tag_str = " ".join([f"`{t}`" for t in tags])
-            content += f"### [{paper['title']}]({paper['url']})\n"
-            content += f"- **Authors**: {', '.join(paper['authors'])}\n"
-            content += f"- **Date**: {paper['published']}\n"
-            content += f"- **Tags**: {tag_str}\n"
-            content += f"- **AI Reason**: {paper['reason']}\n\n"
-
-    # Append to README.md
-    mode = "a" if os.path.exists("README.md") else "w"
-    with open("README.md", mode, encoding="utf-8") as f:
-        if mode == "w":
-            f.write("# Daily AI4Science & Perturbation Prediction Papers\n\n")
-        f.write(content)
+        dates = []
+    
+    if today not in dates:
+        dates.append(today)
+        dates.sort(reverse=True)
+        with open(DATES_FILE, "w") as f:
+            json.dump(dates, f)
+    
+    return today
 
 if __name__ == "__main__":
     new_papers = fetch_arxiv_papers()
-    relevant = filter_papers(new_papers)
-    update_readme(relevant)
+    processed = filter_papers(new_papers)
+    if processed:
+        save_daily_data(processed)
+        update_readme(processed) # Keep README as backup/log
+    else:
+        print("No new papers to process today.")
