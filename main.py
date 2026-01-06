@@ -62,15 +62,15 @@ def process_with_ai(papers):
         prompt = f"""Title: {paper['title']}
 Abstract: {paper['summary']}
 
-Analyze if this paper is related to:
-1. AI4Science (using AI for scientific discovery in biology, chemistry, physics, etc.)
-2. Perturbation Prediction (specifically predicting how systems respond to perturbations, like drug effects or genetic changes)
+Analyze the following paper:
+1. Is it AI4Science (using AI for scientific discovery in biology, chemistry, physics, etc.)?
+2. Is it specifically Perturbation Prediction (Narrowly defined as predicting cellular or genetic responses to perturbations like gene knockouts, drug treatments at the single-cell or molecular level)?
 
 Respond ONLY in JSON format:
 {{
   "is_ai4science": boolean,
   "is_perturbation": boolean,
-  "reasoning": "A concise 1-sentence summary in Chinese focusing on the scientific contribution."
+  "reasoning": "A concise 1-sentence summary in Chinese. If it's AI4Science, highlight the scientific contribution. If not, briefly summarize the methodology or goal."
 }}"""
         
         try:

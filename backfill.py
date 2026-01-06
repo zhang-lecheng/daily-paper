@@ -66,7 +66,7 @@ Abstract: {paper['summary']}
 
 Analyze if this paper is related to:
 1. AI4Science (using AI for scientific discovery in biology, chemistry, physics, etc.)
-2. Perturbation Prediction (specifically predicting how systems respond to perturbations, like drug effects or genetic changes)
+2. Perturbation Prediction (Narrowly defined as predicting cellular or genetic responses to perturbations like gene knockouts, drug treatments at the single-cell or molecular level).
 
 Respond ONLY in JSON format:
 {{

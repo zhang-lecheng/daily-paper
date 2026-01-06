@@ -104,7 +104,7 @@ function renderPapers() {
     }
 
     elements.paperList.innerHTML = filtered.map((paper, index) => `
-        <div class="paper-card">
+        <div class="paper-card ${paper.is_ai4science ? 'ai4science-card' : ''}">
             <div class="paper-header">
                 <span class="paper-index">${index + 1}</span>
                 <div class="paper-title">
@@ -120,7 +120,7 @@ function renderPapers() {
                 ${paper.is_ai4science ? '<span class="tag"><i class="fas fa-microscope"></i> AI4Science</span>' : ''}
                 ${paper.is_perturbation ? '<span class="tag perturbation"><i class="fas fa-vial"></i> Perturbation Prediction</span>' : ''}
             </div>
-            ${paper.is_ai4science ? `
+            ${paper.reasoning ? `
                 <div class="ai-reason">
                     <span class="reason-label"><i class="fas fa-robot"></i> AI Insight</span>
                     ${paper.reasoning}
