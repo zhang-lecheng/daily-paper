@@ -3,6 +3,9 @@ name: Daily arXiv Update
 on:
   schedule:
     - cron: '0 2 * * *' # Runs at 02:00 UTC every day
+  push:
+    branches:
+      - main
   workflow_dispatch: # Allows manual trigger
 
 jobs:
