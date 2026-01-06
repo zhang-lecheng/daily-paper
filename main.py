@@ -16,6 +16,7 @@ CATEGORIES = ["cs.AI", "cs.LG", "stat.ML", "q-bio.QM", "physics.comp-ph", "math.
 MAX_RESULTS = 100
 DATA_DIR = "data"
 DATES_FILE = os.path.join(DATA_DIR, "available_dates.json")
+HISTORY_FILE = os.path.join(DATA_DIR, "history.json")
 
 os.makedirs(DATA_DIR, exist_ok=True)
 
@@ -46,7 +47,8 @@ def fetch_arxiv_papers():
                 "summary": result.summary.replace("\n", " "),
                 "authors": [author.name for author in result.authors],
                 "url": result.entry_id,
-                "published": result.published.strftime("%Y-%m-%d")
+                "published": result.published.strftime("%Y-%m-%d"),
+                "primary_category": result.primary_category
             })
     except Exception as e:
         print(f"Error fetching from arXiv: {e}")
@@ -62,13 +64,13 @@ Abstract: {paper['summary']}
 
 Analyze if this paper is related to:
 1. AI4Science (using AI for scientific discovery in biology, chemistry, physics, etc.)
-2. Perturbation Prediction (specifically predicting how systems respond to perturbations)
+2. Perturbation Prediction (specifically predicting how systems respond to perturbations, like drug effects or genetic changes)
 
 Respond ONLY in JSON format:
 {{
-  "is_ai4science": true/false,
-  "is_perturbation": true/false,
-  "reasoning": "brief explanation"
+  "is_ai4science": boolean,
+  "is_perturbation": boolean,
+  "reasoning": "A concise 1-sentence summary in Chinese focusing on the scientific contribution."
 }}"""
         
         try:
@@ -114,13 +116,36 @@ def save_data(processed):
     print(f"Data saved to {file_path}")
 
 def main():
-    papers = fetch_arxiv_papers()
-    if not papers:
+    # Load history
+    history = []
+    if os.path.exists(HISTORY_FILE):
+        with open(HISTORY_FILE, "r") as f:
+            history = json.load(f)
+            
+    all_papers = fetch_arxiv_papers()
+    if not all_papers:
         print("No papers found.")
         return
         
-    processed = process_with_ai(papers)
+    # Filter out papers already in history
+    new_papers = [p for p in all_papers if p["id"] not in history]
+    print(f"Found {len(new_papers)} new papers out of {len(all_papers)} total.")
+    
+    if not new_papers:
+        print("No new papers to process.")
+        return
+
+    processed = process_with_ai(new_papers)
     save_data(processed)
+    
+    # Update history
+    new_ids = [p["id"] for p in new_papers]
+    history.extend(new_ids)
+    # Keep last 2000 papers in history
+    history = history[-2000:]
+    with open(HISTORY_FILE, "w") as f:
+        json.dump(history, f)
+        
     print("Done!")
 
 if __name__ == '__main__':

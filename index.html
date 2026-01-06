@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,20 +9,26 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
+
 <body>
     <div class="glass-bg"></div>
-    
+
     <header>
         <div class="header-container">
             <div class="logo">
                 <h1>AI4Science<span>Tracker</span></h1>
             </div>
             <div class="controls">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Search papers...">
+                </div>
                 <div class="date-selector">
-                    <select id="dateSelect">
-                        <option value="">Loading dates...</option>
-                    </select>
+                    <i class="far fa-calendar-alt"></i>
+                    <input type="text" id="dateSelect" placeholder="Select Date">
                 </div>
                 <div class="filter-toggle">
                     <label class="switch">
@@ -31,6 +38,9 @@
                     <span>AI4Science Only</span>
                 </div>
             </div>
+        </div>
+        <div class="category-bar" id="categoryBar">
+            <!-- Category pills will be injected here -->
         </div>
     </header>
 
@@ -42,6 +52,8 @@
         <p>Data updated daily from arXiv • Powered by DeepSeek AI</p>
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="script.js"></script>
 </body>
+
 </html>
