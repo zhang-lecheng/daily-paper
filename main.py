@@ -17,9 +17,17 @@ HISTORY_FILE = "papers_history.json"
 
 client = OpenAI(api_key=DEEPSEEK_API_KEY, base_url=DEEPSEEK_BASE_URL)
 
+import time
+
 def fetch_arxiv_papers():
     print("Fetching papers from arXiv...")
     query = " OR ".join([f"cat:{cat}" for cat in CATEGORIES])
+    client_arxiv = arxiv.Client(
+        page_size=MAX_RESULTS,
+        delay_seconds=3,
+        num_retries=5
+    )
+    
     search = arxiv.Search(
         query=query,
         max_results=MAX_RESULTS,
@@ -27,15 +35,31 @@ def fetch_arxiv_papers():
     )
     
     papers = []
-    for result in search.results():
-        papers.append({
-            "id": result.entry_id,
-            "title": result.title,
-            "summary": result.summary.replace("\n", " "),
-            "authors": [author.name for author in result.authors],
-            "url": result.entry_id,
-            "published": result.published.strftime("%Y-%m-%d")
-        })
+    max_attempts = 3
+    for attempt in range(max_attempts):
+        try:
+            results = list(client_arxiv.results(search))
+            for result in results:
+                papers.append({
+                    "id": result.entry_id,
+                    "title": result.title,
+                    "summary": result.summary.replace("\n", " "),
+                    "authors": [author.name for author in result.authors],
+                    "url": result.entry_id,
+                    "published": result.published.strftime("%Y-%m-%d")
+                })
+            return papers
+        except arxiv.HTTPError as e:
+            if "429" in str(e) and attempt < max_attempts - 1:
+                wait_time = (attempt + 1) * 30
+                print(f"Rate limited (429). Waiting {wait_time} seconds before retry...")
+                time.sleep(wait_time)
+            else:
+                print(f"ArXiv API error: {e}")
+                break
+        except Exception as e:
+            print(f"Unexpected error: {e}")
+            break
     return papers
 
 def filter_papers(papers):
