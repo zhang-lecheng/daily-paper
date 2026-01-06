@@ -34,7 +34,7 @@ async function loadPapers(date) {
 
 function renderPapers() {
     const showOnlyAI = aiFilter.checked;
-    const filtered = showOnlyAI ? allPapers.filter(p => p.ai4science) : allPapers;
+    const filtered = showOnlyAI ? allPapers.filter(p => p.is_ai4science) : allPapers;
 
     if (filtered.length === 0) {
         paperList.innerHTML = `<div class="loading">No papers found matching the filter.</div>`;
@@ -48,13 +48,13 @@ function renderPapers() {
             </div>
             <div class="paper-authors">${paper.authors.join(', ')} • ${paper.published}</div>
             <div class="paper-tags">
-                ${paper.ai4science ? '<span class="tag">AI4Science</span>' : ''}
-                ${paper.perturbation ? '<span class="tag perturbation">Perturbation Prediction</span>' : ''}
+                ${paper.is_ai4science ? '<span class="tag">AI4Science</span>' : ''}
+                ${paper.is_perturbation ? '<span class="tag perturbation">Perturbation Prediction</span>' : ''}
             </div>
-            ${paper.ai4science ? `
+            ${paper.is_ai4science ? `
                 <div class="ai-reason">
                     <span class="reason-label">AI Analysis</span>
-                    ${paper.reason}
+                    ${paper.reasoning}
                 </div>
             ` : ''}
         </div>
